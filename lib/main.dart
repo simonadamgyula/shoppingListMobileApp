@@ -1,6 +1,13 @@
+import 'dart:developer';
+
+import 'package:app/households.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:session_storage/session_storage.dart';
 
 import 'login.dart';
+
+final loginNotifier = ValueNotifier("");
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +34,10 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = SessionStorage();
+
+    log((session["session_id"] == null) ? "true" : "false");
+
     return Scaffold(
         backgroundColor: const Color(0xFF2F3C42),
         appBar: AppBar(
@@ -37,10 +48,10 @@ class HomePage extends StatelessWidget {
           ),
           backgroundColor: const Color(0xFF2F3C42),
         ),
-        body: const Column(
+        body: Column(
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            Align(
+            const Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -62,8 +73,14 @@ class HomePage extends StatelessWidget {
                                 size: 30,
                               ))
                         ]))),
-            Center(child: Households()),
-            LoginButton()
+            Center(
+                child: ValueListenableBuilder<String>(
+                    valueListenable: loginNotifier,
+                    builder: (context, value, child) {
+                      return Households(loginNotifier: loginNotifier,);
+                    })),
+            Text("${session["session_id"]}"),
+            const LoginButton()
           ],
         ));
   }
@@ -79,26 +96,48 @@ class LoginButton extends StatefulWidget {
 class _LoginButtonState extends State<LoginButton> {
   @override
   Widget build(BuildContext context) {
-    return IconButton(onPressed: () => {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage())
-      )
-    }, icon: const Icon(Icons.login));
+    return IconButton(
+        onPressed: () => {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const LoginPage()))
+            },
+        icon: const Icon(Icons.login));
   }
 }
 
-class Households extends StatelessWidget {
-  const Households({super.key});
+class Households extends StatefulWidget {
+  final ValueListenable<String> loginNotifier;
+
+  const Households({super.key, required this.loginNotifier});
+
+  @override
+  State<Households> createState() => HouseholdsState();
+}
+
+class HouseholdsState extends State<Households> {
+  Future<List<Household>>? _futureHouseholds;
+
+  @override
+  void initState() {
+    super.initState();
+    final session = SessionStorage();
+
+    _futureHouseholds = getHouseholds(session["session_id"]);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final session = SessionStorage();
+    _futureHouseholds = getHouseholds(session["session_id"]);
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        HouseholdCard(title: "Household"),
-        HouseholdCard(title: "Household 2")
-      ],
+      children: (_futureHouseholds == null)
+          ? <Widget>[
+              const HouseholdCard(title: "Household"),
+              const HouseholdCard(title: "Household 2")
+            ]
+          : [const Text("nothing")],
     );
   }
 }
@@ -120,7 +159,8 @@ class HouseholdCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                 child: Text(
                   title,
-                  style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
                 )),
           ),
         ));

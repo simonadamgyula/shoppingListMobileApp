@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:app/main.dart';
 import 'package:flutter/material.dart';
+import 'package:session_storage/session_storage.dart';
 import 'package:http/http.dart' as http;
 
 class LoginPage extends StatelessWidget {
@@ -37,20 +39,23 @@ class _LoginFormState extends State<LoginForm> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
-  Future<bool> logIn() async {
-    log("log in");
+  Future<String?> logIn() async {
     final response = await http.post(
         Uri.parse("http://192.168.1.93:8001/user/authenticate"),
-        body: jsonDecode(
-            '{"username": "${usernameController.text}", "password": "${passwordController.text}"}'));
-
-    log("something");
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: jsonEncode({
+          "username": usernameController.text,
+          "password": passwordController.text
+        }));
 
     if (response.statusCode == 200) {
-      return true;
+      final body = jsonDecode(response.body);
+      return body["session_id"];
     }
 
-    return false;
+    return null;
   }
 
   @override
@@ -63,6 +68,8 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    final session = SessionStorage();
+
     return Form(
       key: _formKey,
       child: Column(
@@ -82,7 +89,13 @@ class _LoginFormState extends State<LoginForm> {
           TextButton(
               onPressed: () {
                 logIn().then(
-                    (success) {log("$success ysdfas");});
+                    (result) {
+                      if (result != null) {
+                        log(result);
+                        session["session_id"] = result;
+                        loginNotifier.value = result;
+                      }
+                    });
               },
               child: const Text("Log in"))
         ],
