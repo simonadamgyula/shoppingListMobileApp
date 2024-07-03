@@ -1,6 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+
+import 'login.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,13 +15,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'ShopMate',
       theme: ThemeData(),
-      home: const MyHomePage(title: 'ShopMate'),
+      home: const HomePage(title: 'ShopMate'),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key, required this.title});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key, required this.title});
 
   final String title;
 
@@ -62,9 +62,29 @@ class MyHomePage extends StatelessWidget {
                                 size: 30,
                               ))
                         ]))),
-            Center(child: Households())
+            Center(child: Households()),
+            LoginButton()
           ],
         ));
+  }
+}
+
+class LoginButton extends StatefulWidget {
+  const LoginButton({super.key});
+
+  @override
+  State<LoginButton> createState() => _LoginButtonState();
+}
+
+class _LoginButtonState extends State<LoginButton> {
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(onPressed: () => {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage())
+      )
+    }, icon: const Icon(Icons.login));
   }
 }
 
