@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'dart:developer';
 
-import 'package:app/main.dart';
 import 'package:flutter/material.dart';
-import 'package:session_storage/session_storage.dart';
 import 'package:http/http.dart' as http;
 
 class LoginPage extends StatelessWidget {
@@ -18,13 +15,14 @@ class LoginPage extends StatelessWidget {
           title: const Text(
             "Login",
             style:
-                TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+            TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
           ),
           backgroundColor: const Color(0xFF2F3C42),
         ),
         body: const LoginForm());
   }
 }
+
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -36,8 +34,8 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<_LoginFormState>();
 
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   Future<String?> logIn() async {
     final response = await http.post(
@@ -68,8 +66,6 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    final session = SessionStorage();
-
     return Form(
       key: _formKey,
       child: Column(
@@ -91,9 +87,7 @@ class _LoginFormState extends State<LoginForm> {
                 logIn().then(
                     (result) {
                       if (result != null) {
-                        log(result);
-                        session["session_id"] = result;
-                        loginNotifier.value = result;
+                        Navigator.pop(context, result);
                       }
                     });
               },
