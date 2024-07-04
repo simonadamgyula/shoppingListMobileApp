@@ -12,6 +12,10 @@ class Session extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateHouseholds() {
+    notifyListeners();
+  }
+
   String? getSessionId() {
     return _session["session_id"];
   }

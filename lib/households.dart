@@ -37,3 +37,62 @@ Future<List<Household>> getHouseholds(String? sessionId) async {
 
   return households;
 }
+
+Future<Household?> getHousehold(String? sessionId, int householdId) async {
+  if (sessionId == null) throw StateError("Not logged in");
+
+  final response = await http.post(
+      Uri.parse("http://192.168.1.93:8001/household/get"),
+      body: jsonEncode({
+        "session_id": sessionId,
+        "household_id": householdId
+      })
+  );
+
+  if (response.statusCode == 401) {
+    throw StateError("Not a member of this household");
+  } else if (response.statusCode != 200) {
+    return null;
+  }
+
+  final body = jsonDecode(response.body);
+
+  return Household(id: householdId, name: body["name"], color: body["color"]);
+}
+
+Future<bool> joinHousehold(String? sessionId, String code) async {
+  if (sessionId == null) throw StateError("Not logged in");
+
+  final response = await http.post(
+      Uri.parse("http://192.168.1.93:8001/household/join"),
+      body: jsonEncode({
+        "session_id": sessionId,
+        "household_code": code
+      })
+  );
+
+  if (response.statusCode != 200) {
+    return false;
+  }
+
+  return true;
+}
+
+Future<bool> createHousehold(String? sessionId, String name, int color) async {
+   if (sessionId == null) throw StateError("Not logged in");
+   
+   final response = await http.post(
+     Uri.parse("http://192.168.1.93:8001/household/new"),
+     body: jsonEncode({
+       "session_id": sessionId,
+       "name": name,
+       "color": color
+     })
+   );
+
+   if (response.statusCode != 200) {
+     return false;
+   }
+
+   return true;
+}

@@ -66,19 +66,26 @@ class HomePage extends StatelessWidget {
                                     fontSize: 40,
                                     fontWeight: FontWeight.bold),
                               ),
-                              IconButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const AddHouseholdPage()));
-                                  },
-                                  icon: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                    size: 30,
-                                  ))
+                              Consumer<Session>(builder: (context, session, child) {
+                                return IconButton(
+                                    onPressed: () async {
+                                      final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const AddHouseholdPage()));
+
+                                      if (!context.mounted) return;
+                                      if (!result) return;
+
+                                      session.updateHouseholds();
+                                    },
+                                    icon: const Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                      size: 30,
+                                    ));
+                              })
                             ]))),
                 Consumer<Session>(builder: (context, session, child) {
                   return session.getSessionId() == null
@@ -170,17 +177,22 @@ class HouseholdCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 5),
-        child: Card(
-          color: HSLColor.fromAHSL(1, color.toDouble(), 0.83, 0.62).toColor(),
-          child: SizedBox(
-            height: 180,
-            child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                      color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
-                )),
+        child: InkWell(
+          onTap: () {
+            
+          },
+          child: Card(
+            color: HSLColor.fromAHSL(1, color.toDouble(), 0.83, 0.62).toColor(),
+            child: SizedBox(
+              height: 180,
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                  )),
+            ),
           ),
         ));
   }
