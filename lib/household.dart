@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:app/catalog.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
 
@@ -46,28 +49,34 @@ class _HouseholdPageState extends State<HouseholdPage> {
                 ),
                 backgroundColor: const Color(0xFF2F3C42),
               ),
-              body: const Column(
-                children: <Widget>[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                      child: Text(
-                        "To buy",
-                        style: TextStyle(
-                            color: Color(0x66ffffff),
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold),
+              body: const SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                        child: Text(
+                          "To buy",
+                          style: TextStyle(
+                              color: Color(0x66ffffff),
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      ItemCard(item: Item(name: "milk", quantity: "2l")),
-                      ItemCard(item: Item(name: "orange"))
-                    ],
-                  )
-                ],
+                    Row(
+                      children: [
+                        ItemCard(item: Item(name: "milk", quantity: "2l")),
+                        ItemCard(item: Item(name: "orange"))
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.center,
+                      child: Catalog(),
+                    )
+                  ],
+                ),
               ));
         });
   }
@@ -83,13 +92,57 @@ class ItemCard extends StatelessWidget {
     return Card(
       color: const Color(0xff00A894),
       child: SizedBox(
-        width: 60,
-        height: 70,
+        width: 90,
+        height: 110,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [Text(item.name), Text(item.quantity ?? "")],
+          children: [Text(item.name, textAlign: TextAlign.center,), Text(item.quantity ?? "")],
         ),
+      ),
+    );
+  }
+}
+
+class Catalog extends StatefulWidget {
+  const Catalog({super.key});
+
+  @override
+  State<Catalog> createState() => _CatalogState();
+}
+
+class _CatalogState extends State<Catalog> {
+  final List<Map<String, dynamic>> _catalog = getCatalog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        children: _catalog
+            .map((section) => Section(
+                  section: section,
+                ))
+            .toList());
+  }
+}
+
+class Section extends StatelessWidget {
+  const Section({super.key, required this.section});
+
+  final Map<String, dynamic> section;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Item> items =
+        (section["items"] as List<dynamic>).map((item) => Item.fromJson(item)).toList();
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Text(section["name"]),
+          Wrap(
+            children: items.map((item) => ItemCard(item: item)).toList(),
+          )
+        ],
       ),
     );
   }
