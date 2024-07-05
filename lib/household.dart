@@ -1,8 +1,7 @@
-import 'dart:developer';
-
 import 'package:app/catalog.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'households.dart';
 import 'items.dart';
@@ -28,7 +27,12 @@ class _HouseholdPageState extends State<HouseholdPage> {
         future: _futureHousehold,
         builder: (BuildContext context, AsyncSnapshot<Household?> snapshot) {
           if (!snapshot.hasData) {
-            return const CircularProgressIndicator();
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text("Loading"),
+              ),
+              body: const CircularProgressIndicator(),
+            );
           }
 
           final household = snapshot.data;
@@ -49,33 +53,41 @@ class _HouseholdPageState extends State<HouseholdPage> {
                 ),
                 backgroundColor: const Color(0xFF2F3C42),
               ),
-              body: const SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                        child: Text(
-                          "To buy",
-                          style: TextStyle(
-                              color: Color(0x66ffffff),
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold),
+              body: ChangeNotifierProvider<ItemsStorage>(
+                create: (BuildContext context) =>
+                    ItemsStorage(itemsToBuy: household.items ?? [], itemsBought: []),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                          child: Text(
+                            "To buy",
+                            style: TextStyle(
+                                color: Color(0x66ffffff),
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        ItemCard(item: Item(name: "milk", quantity: "2l")),
-                        ItemCard(item: Item(name: "orange"))
-                      ],
-                    ),
-                    Align(
-                      alignment: Alignment.center,
-                      child: Catalog(),
-                    )
-                  ],
+                      Consumer(
+                        builder: (context, ItemsStorage itemStorage, child) {
+                          return Row(
+                            children: itemStorage
+                                .getItemsToBuy()
+                                .map((item) => ItemCard(item: item))
+                                .toList(),
+                          );
+                        },
+                      ),
+                      const Align(
+                        alignment: Alignment.center,
+                        child: Catalog(),
+                      )
+                    ],
+                  ),
                 ),
               ));
         });
@@ -97,7 +109,13 @@ class ItemCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [Text(item.name, textAlign: TextAlign.center,), Text(item.quantity ?? "")],
+          children: [
+            Text(
+              item.name,
+              textAlign: TextAlign.center,
+            ),
+            Text(item.quantity ?? "")
+          ],
         ),
       ),
     );

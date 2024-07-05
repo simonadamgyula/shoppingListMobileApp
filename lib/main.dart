@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:app/addHousehold.dart';
 import 'package:app/household.dart';
 import 'package:app/households.dart';
@@ -5,6 +7,7 @@ import 'package:app/session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login.dart';
 
@@ -31,10 +34,38 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
 
   final String title;
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool finishedInit = false;
+
+  Future<void> loadSessionId() async {
+    final session = Session();
+    final prefs = await SharedPreferences.getInstance();
+
+    final sessionId = prefs.getString("session_id");
+
+    log(sessionId ?? "null");
+
+    if (sessionId != null) session.setSessionId(sessionId);
+    setState(() {
+      finishedInit = true;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadSessionId();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +73,7 @@ class HomePage extends StatelessWidget {
         backgroundColor: const Color(0xFF2F3C42),
         appBar: AppBar(
           title: Text(
-            title,
+            widget.title,
             style: const TextStyle(
                 color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
           ),
@@ -113,6 +144,11 @@ class _LoginButtonState extends State<LoginButton> {
     return IconButton(onPressed: () => {logIn(context)}, icon: const Icon(Icons.login));
   }
 
+  Future<void> saveSessionId(String sessionId) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("session_id", sessionId);
+  }
+
   Future<void> logIn(BuildContext context) async {
     final result = await Navigator.push(
       context,
@@ -122,6 +158,7 @@ class _LoginButtonState extends State<LoginButton> {
     if (!context.mounted) return;
 
     widget.session.setSessionId(result);
+    saveSessionId(result);
   }
 }
 
