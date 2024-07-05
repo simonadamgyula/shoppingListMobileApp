@@ -40,6 +40,16 @@ class ItemsStorage extends ChangeNotifier {
   }
 
   void addItem(Item item) {
+    final session = Session();
+    if (session.getSessionId() == null) return;
+
+    http.post(Uri.parse("http://192.168.1.93:8001/household/items/add"),
+        body: jsonEncode({
+          "session_id": session.getSessionId(),
+          "household_id": householdId,
+          "item": item
+        }));
+
     itemsToBuy.add(item);
 
     notifyListeners();
@@ -71,9 +81,25 @@ class ItemsStorage extends ChangeNotifier {
   }
 
   void clearBought() {
+    for (var item in itemsBought) {
+      removeItem(item);
+    }
+
     itemsBought.clear();
 
     notifyListeners();
+  }
+
+  void removeItem(Item item) {
+    final session = Session();
+    if (session.getSessionId() == null) return;
+
+    http.post(Uri.parse("http://192.168.1.93:8001/household/items/remove"),
+        body: jsonEncode({
+          "session_id": session.getSessionId(),
+          "household_id": householdId,
+          "item": item.name
+        }));
   }
 
   List<Item> getItemsToBuy() {

@@ -2,7 +2,6 @@ import 'package:app/catalog.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:session_storage/session_storage_generic.dart';
 
 import 'households.dart';
 import 'items.dart';
@@ -55,59 +54,80 @@ class _HouseholdPageState extends State<HouseholdPage> {
                 backgroundColor: const Color(0xFF2F3C42),
               ),
               body: ChangeNotifierProvider<ItemsStorage>(
-                create: (BuildContext context) => ItemsStorage(household.items ?? [], widget.id),
+                create: (BuildContext context) =>
+                    ItemsStorage(household.items ?? [], widget.id),
                 child: SingleChildScrollView(
-                  child: Column(
-                    children: <Widget>[
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        const Align(
+                          alignment: Alignment.centerLeft,
                           child: Text(
                             "To buy",
                             style: TextStyle(
                                 color: Color(0x66ffffff),
                                 fontSize: 30,
                                 fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.left,
                           ),
                         ),
-                      ),
-                      Consumer(
-                        builder: (context, ItemsStorage itemsStorage, child) {
-                          return Wrap(
-                            children: itemsStorage
-                                .getItemsToBuy()
-                                .map((item) => ItemCard(
-                                      item: item,
-                                      itemsStorage: itemsStorage,
-                                    ))
-                                .toList(),
+                        Consumer(
+                          builder: (context, ItemsStorage itemsStorage, child) {
+                            return Wrap(
+                              alignment: WrapAlignment.spaceEvenly,
+                              runSpacing: 8,
+                              children: itemsStorage
+                                  .getItemsToBuy()
+                                  .map((item) => ItemCard(
+                                        item: item,
+                                        itemsStorage: itemsStorage,
+                                      ))
+                                  .toList(),
+                            );
+                          },
+                        ),
+                        Consumer<ItemsStorage>(
+                            builder: (context, ItemsStorage itemsStorage, child) {
+                          if (itemsStorage.getBoughtItems().isEmpty)
+                            return const SizedBox();
+
+                          return const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Bought",
+                              style: TextStyle(
+                                  color: Color(0x66ffffff),
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.left,
+                            ),
                           );
-                        },
-                      ),
-                      Consumer(
-                        builder: (context, ItemsStorage itemsStorage, child) {
-                          return Wrap(
-                            children: itemsStorage
-                                .getBoughtItems()
-                                .map((item) => ItemCard(
-                                      item: item,
-                                      itemsStorage: itemsStorage,
-                                    ))
-                                .toList(),
-                          );
-                        },
-                      ),
-                      Align(
-                        alignment: Alignment.center,
-                        child: Consumer<ItemsStorage>(
+                        }),
+                        Consumer(
+                          builder: (context, ItemsStorage itemsStorage, child) {
+                            return Wrap(
+                              alignment: WrapAlignment.spaceEvenly,
+                              runSpacing: 8,
+                              children: itemsStorage
+                                  .getBoughtItems()
+                                  .map((item) => ItemCard(
+                                        item: item,
+                                        itemsStorage: itemsStorage,
+                                      ))
+                                  .toList(),
+                            );
+                          },
+                        ),
+                        Consumer<ItemsStorage>(
                             builder: (context, ItemsStorage itemsStorage, child) {
                           return Catalog(
                             itemsStorage: itemsStorage,
                           );
-                        }),
-                      )
-                    ],
+                        })
+                      ],
+                    ),
                   ),
                 ),
               ));
@@ -220,37 +240,87 @@ class Catalog extends StatefulWidget {
 class _CatalogState extends State<Catalog> {
   final List<Map<String, dynamic>> _catalog = getCatalog();
 
+  final TextEditingController searchController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-        children: _catalog
-            .map((section) => Section(
-                  section: section,
-                  itemsStorage: widget.itemsStorage,
-                ))
-            .toList());
+    return Container(
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        color: Color(0x33000000),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      margin: const EdgeInsets.only(top: 20),
+      child: Column(
+          children: <Widget>[
+                TextField(
+                  decoration: const InputDecoration(
+                    hintText: "Search", hintStyle: TextStyle(color: Colors.white)
+                  ),
+                  controller: searchController,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ] +
+              _catalog
+                  .map((section) => Section(
+                        section: section,
+                        itemsStorage: widget.itemsStorage,
+                      ))
+                  .toList()),
+    );
   }
 }
 
-class Section extends StatelessWidget {
+class Section extends StatefulWidget {
   const Section({super.key, required this.section, required this.itemsStorage});
 
   final Map<String, dynamic> section;
   final ItemsStorage itemsStorage;
 
   @override
+  State<Section> createState() => _SectionState();
+}
+
+class _SectionState extends State<Section> {
+  bool opened = false;
+
+  @override
   Widget build(BuildContext context) {
-    final List<Item> items =
-        (section["items"] as List<dynamic>).map((item) => Item.fromJson(item)).toList();
+    final List<Item> items = (widget.section["items"] as List<dynamic>)
+        .map((item) => Item.fromJson(item))
+        .toList();
 
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          Text(section["name"]),
-          Wrap(
-            children: items.map((item) => ItemCard(item: item, itemsStorage: itemsStorage,)).toList(),
-          )
-        ],
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InkWell(
+                onTap: () {
+                  setState(() {
+                    opened = !opened;
+                  });
+                },
+                child: Text(
+                  widget.section["name"],
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                )),
+            opened
+                ? Wrap(
+                    alignment: WrapAlignment.spaceEvenly,
+                    runSpacing: 8,
+                    children: items
+                        .map((item) => ItemCard(
+                              item: item,
+                              itemsStorage: widget.itemsStorage,
+                            ))
+                        .toList(),
+                  )
+                : const SizedBox()
+          ],
+        ),
       ),
     );
   }
