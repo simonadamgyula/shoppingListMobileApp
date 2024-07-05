@@ -1,30 +1,43 @@
+import 'dart:convert';
+
+import 'package:app/session.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
 
 class Item {
-  const Item({this.id, required this.name, this.quantity, this.imagePath, this.bought});
+  Item({this.id, required this.name, this.quantity, this.imagePath, this.bought});
 
   final dynamic id;
   final String name;
   final String? quantity;
   final String? imagePath;
-  final bool? bought;
+  bool? bought;
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return switch (json) {
-      {"id": String id, "name": String name} =>
-          Item(id: id, name: name),
+      {"id": String id, "name": String name} => Item(id: id, name: name),
       {"id": String id, "name": String name, "src": String src} =>
-          Item(id: id, name: name, imagePath: src),
+        Item(id: id, name: name, imagePath: src),
       _ => throw const FormatException('Failed to load item.'),
     };
   }
 }
 
 class ItemsStorage extends ChangeNotifier {
-  ItemsStorage({required this.itemsToBuy, required this.itemsBought});
+  ItemsStorage._internal(
+      {required this.itemsToBuy, required this.itemsBought, required this.householdId});
 
   List<Item> itemsToBuy;
   List<Item> itemsBought;
+  final int householdId;
+
+  factory ItemsStorage(List<Item> items, int householdId) {
+    final bought = items.where((item) => item.bought ?? false).toList();
+    final toBuy = items.where((item) => !(item.bought ?? false)).toList();
+
+    return ItemsStorage._internal(
+        itemsToBuy: toBuy, itemsBought: bought, householdId: householdId);
+  }
 
   void addItem(Item item) {
     itemsToBuy.add(item);
@@ -32,16 +45,27 @@ class ItemsStorage extends ChangeNotifier {
     notifyListeners();
   }
 
-  void itemBought(Item item) {
-    itemsToBuy.remove(item);
-    itemsBought.add(item);
+  void itemSetBought(Item item, bool bought) {
+    final session = Session();
+    if (session.getSessionId() == null) return;
 
-    notifyListeners();
-  }
+    http.post(Uri.parse("http://192.168.1.93:8001/household/items/set_bought"),
+        body: jsonEncode({
+          "session_id": session.getSessionId(),
+          "household_id": householdId,
+          "item": item.name,
+          "bought": bought
+        }));
 
-  void itemNotBought(Item item) {
-    itemsBought.remove(item);
-    itemsBought.add(item);
+    if (bought) {
+      itemsToBuy.remove(item);
+      itemsBought.add(item);
+      item.bought = bought;
+    } else {
+      itemsBought.remove(item);
+      itemsToBuy.add(item);
+      item.bought = bought;
+    }
 
     notifyListeners();
   }
@@ -54,5 +78,9 @@ class ItemsStorage extends ChangeNotifier {
 
   List<Item> getItemsToBuy() {
     return itemsToBuy;
+  }
+
+  List<Item> getBoughtItems() {
+    return itemsBought;
   }
 }
