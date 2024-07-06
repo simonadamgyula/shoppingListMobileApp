@@ -1,16 +1,20 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/add_household.dart';
 import 'package:app/household.dart';
 import 'package:app/households.dart';
 import 'package:app/profile_page.dart';
+import 'package:app/register.dart';
 import 'package:app/session.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -73,6 +77,11 @@ class _HomePageState extends State<HomePage> {
     loadSessionId();
   }
 
+  Future<void> saveSessionId(String sessionId) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("session_id", sessionId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<Session>(
@@ -92,9 +101,60 @@ class _HomePageState extends State<HomePage> {
                       borderRadius: BorderRadius.circular(15.0),
                       child: Consumer<Session>(
                         builder: (context, session, child) {
+                          if (session.getSessionId() == null) {
+                            return Consumer<Session>(
+                              builder: (context, session, child) {
+                                return RichText(
+                                  text: TextSpan(children: [
+                                    TextSpan(
+                                        text: "Log in",
+                                        style:
+                                            const TextStyle(fontWeight: FontWeight.bold),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            final result = await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const LoginPage()));
+
+                                            if (!context.mounted) return;
+
+                                            if (result != null) {
+                                              session.setSessionId(result);
+                                              saveSessionId(result);
+                                            }
+                                          }),
+                                    const TextSpan(text: " / "),
+                                    TextSpan(
+                                        text: "Register",
+                                        style:
+                                            const TextStyle(fontWeight: FontWeight.bold),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            final result = await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const RegisterPage()));
+
+                                            if (!context.mounted) return;
+
+                                            if (result != null) {
+                                              session.setSessionId(result);
+                                              saveSessionId(result);
+                                            }
+                                          }),
+                                  ]),
+                                );
+                              },
+                            );
+                          }
+
                           return InkWell(
                             onTap: () async {
-                              final result = await Navigator.push(context,
+                              final result = await Navigator.push(
+                                  context,
                                   MaterialPageRoute(
                                       builder: (context) => const ProfilePage()));
 
@@ -141,7 +201,7 @@ class _HomePageState extends State<HomePage> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                              const AddHouseholdPage()));
+                                                  const AddHouseholdPage()));
 
                                       if (!context.mounted) return;
                                       if (!result) return;
@@ -157,44 +217,14 @@ class _HomePageState extends State<HomePage> {
                             ]))),
                 Consumer<Session>(builder: (context, session, child) {
                   return session.getSessionId() == null
-                      ? LoginButton(session: session)
+                      ? const Text(
+                          "You are not logged in.",
+                          style: TextStyle(color: Color(0xaaffffff)),
+                        )
                       : Center(child: Households(session: session));
                 })
               ],
             )));
-  }
-}
-
-class LoginButton extends StatefulWidget {
-  final Session session;
-
-  const LoginButton({super.key, required this.session});
-
-  @override
-  State<LoginButton> createState() => _LoginButtonState();
-}
-
-class _LoginButtonState extends State<LoginButton> {
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(onPressed: () => {logIn(context)}, icon: const Icon(Icons.login));
-  }
-
-  Future<void> saveSessionId(String sessionId) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString("session_id", sessionId);
-  }
-
-  Future<void> logIn(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
-
-    if (!context.mounted) return;
-
-    widget.session.setSessionId(result);
-    saveSessionId(result);
   }
 }
 
@@ -229,12 +259,12 @@ class HouseholdsState extends State<Households> {
             return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: snapshot.data!
-                    .map((household) =>
-                    HouseholdCard(
-                      title: household.name,
-                      color: household.color,
-                      id: household.id,
-                    ))
+                    .map((household) => HouseholdCard(
+                          title: household.name,
+                          color: household.color,
+                          id: household.id,
+                          session: widget.session,
+                        ))
                     .toList());
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');
@@ -245,36 +275,140 @@ class HouseholdsState extends State<Households> {
   }
 }
 
-class HouseholdCard extends StatelessWidget {
+class HouseholdCard extends StatefulWidget {
   const HouseholdCard(
-      {super.key, required this.title, required this.color, required this.id});
+      {super.key,
+      required this.title,
+      required this.color,
+      required this.id,
+      required this.session});
 
   final String title;
   final int color;
   final int id;
+  final Session session;
+
+  @override
+  State<HouseholdCard> createState() => _HouseholdCardState();
+}
+
+class _HouseholdCardState extends State<HouseholdCard> {
+  Future<void> leaveHousehold() async {
+    final result = await http.post(Uri.parse("http://192.168.1.93:8001/household/leave"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"session_id": widget.session.getSessionId(), "household_id": widget.id}));
+
+    if (result.statusCode != 200) {
+      throw Error();
+    }
+
+    widget.session.updateHouseholds();
+  }
+
+  void openActions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: 150,
+          child: Center(
+            child: Column(
+              children: [
+                const TextButton(
+                  onPressed: null,
+                  child: Text(
+                    "Edit",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const TextButton(
+                  onPressed: null,
+                  child: Text(
+                    "Code",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    leaveHousehold().then((response) {
+                      Navigator.pop(context);
+                    });
+                  },
+                  child: const Text(
+                    "Leave",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      backgroundColor: const Color(0xff20292D),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 5),
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
-                context, MaterialPageRoute(builder: (context) => HouseholdPage(id: id)));
-          },
-          child: Card(
-            color: HSLColor.fromAHSL(1, color.toDouble(), 0.83, 0.62).toColor(),
-            child: SizedBox(
-              height: 180,
-              child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        fit: StackFit.passthrough,
+        children: [
+          Card(
+            color: HSLColor.fromAHSL(1, widget.color.toDouble(), 0.83, 0.62).toColor(),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => HouseholdPage(id: widget.id)));
+              },
+              child: SizedBox(
+                height: 180,
+                child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                   child: Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(
                         color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
-                  )),
+                  ),
+                ),
+              ),
             ),
           ),
-        ));
+          Positioned(
+            right: 0,
+            bottom: 10,
+            child: IconButton(
+              onPressed: () {
+                openActions(context);
+              },
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                size: 40,
+                color: Colors.white,
+              ),
+            ),
+          )
+        ],
+      ),
+    );
   }
 }

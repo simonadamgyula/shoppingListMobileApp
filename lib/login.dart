@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:app/register.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -87,12 +88,23 @@ class _LoginFormState extends State<LoginForm> {
                 });
               },
               child: const Text("Log in")),
-          TextButton(
-              onPressed: () {
-                Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const RegisterPage()));
-              },
-              child: const Text("Register")),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(text: "Don't have an account yet? "),
+                TextSpan(
+                    text: "Register!",
+                    style: const TextStyle(color: Colors.blueAccent),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const RegisterPage()));
+                      })
+              ],
+            ),
+          ),
         ],
       ),
     );

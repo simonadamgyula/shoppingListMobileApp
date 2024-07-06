@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:app/login.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
@@ -39,10 +41,10 @@ class _RegisterFormState extends State<RegisterForm> {
 
   Future<String?> register() async {
     var response = await http.post(
-        Uri.parse("http://192.168.1.93:8001/user/authenticate"),
+        Uri.parse("http://192.168.1.93:8001/user/new"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(
-            {"username": usernameController.text, "password": passwordController.text}));
+            {"username": usernameController.text, "password": passwordController.text, "profile_picture": ""}));
 
     if (response.statusCode != 200) {
       return null;
@@ -82,15 +84,33 @@ class _RegisterFormState extends State<RegisterForm> {
                 labelText: "Repeat password", labelStyle: TextStyle(color: Colors.white)),
           ),
           TextButton(
-              onPressed: () {
-                register().then((result) {
-                  log(result ?? "null");
-                  if (result != null) {
-                    Navigator.pop(context, result);
-                  }
-                });
-              },
-              child: const Text("Register")),
+            onPressed: () {
+              register().then((result) {
+                log(result ?? "null");
+                if (result != null) {
+                  Navigator.pop(context, result);
+                }
+              });
+            },
+            child: const Text("Register"),
+          ),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(text: "Already have an account? "),
+                TextSpan(
+                    text: "Log in!",
+                    style: const TextStyle(color: Colors.blueAccent),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const LoginPage()));
+                      })
+              ],
+            ),
+          ),
         ],
       ),
     );

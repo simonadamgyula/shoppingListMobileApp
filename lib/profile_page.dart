@@ -16,6 +16,12 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _usernameController = TextEditingController();
 
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    super.dispose();
+  }
+
   Future<Profile> getProfile(String sessionId) async {
     final response = await http.post(Uri.parse("http://192.168.1.93:8001/user/get_user"),
         body: jsonEncode({"session_id": sessionId}));
@@ -63,7 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   controller: _usernameController,
                   style: const TextStyle(color: Colors.white),
                   onEditingComplete: () {
-
+                    profile.editProfile(_usernameController.text);
                   },
                 ),
                 Container(
