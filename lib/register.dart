@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'dart:developer';
 
-import 'package:app/register.dart';
 import 'package:flutter/material.dart';
+
 import 'package:http/http.dart' as http;
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatelessWidget {
+  const RegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,32 +15,40 @@ class LoginPage extends StatelessWidget {
         appBar: AppBar(
           iconTheme: const IconThemeData(color: Colors.white),
           title: const Text(
-            "Login",
+            "Register",
             style:
                 TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
           ),
           backgroundColor: const Color(0xFF2F3C42),
         ),
-        body: const LoginForm());
+        body: const RegisterForm());
   }
 }
 
-class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
+class RegisterForm extends StatefulWidget {
+  const RegisterForm({super.key});
 
   @override
-  State<LoginForm> createState() => _LoginFormState();
+  State<RegisterForm> createState() => _RegisterFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
-  final _formKey = GlobalKey<_LoginFormState>();
-
+class _RegisterFormState extends State<RegisterForm> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController rePasswordController = TextEditingController();
 
-  Future<String?> logIn() async {
-    final response = await http.post(
+  Future<String?> register() async {
+    var response = await http.post(
         Uri.parse("http://192.168.1.93:8001/user/authenticate"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(
+            {"username": usernameController.text, "password": passwordController.text}));
+
+    if (response.statusCode != 200) {
+      return null;
+    }
+
+    response = await http.post(Uri.parse("http://192.168.1.93:8001/user/authenticate"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(
             {"username": usernameController.text, "password": passwordController.text}));
@@ -53,44 +62,33 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    usernameController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Form(
-      key: _formKey,
       child: Column(
         children: [
           TextFormField(
+            controller: usernameController,
             decoration: const InputDecoration(
                 labelText: "Username", labelStyle: TextStyle(color: Colors.white)),
-            style: const TextStyle(color: Colors.white),
-            controller: usernameController,
           ),
           TextFormField(
+            controller: passwordController,
             decoration: const InputDecoration(
                 labelText: "Password", labelStyle: TextStyle(color: Colors.white)),
-            style: const TextStyle(color: Colors.white),
-            controller: passwordController,
+          ),
+          TextFormField(
+            controller: rePasswordController,
+            decoration: const InputDecoration(
+                labelText: "Repeat password", labelStyle: TextStyle(color: Colors.white)),
           ),
           TextButton(
               onPressed: () {
-                logIn().then((result) {
+                register().then((result) {
+                  log(result ?? "null");
                   if (result != null) {
                     Navigator.pop(context, result);
                   }
                 });
-              },
-              child: const Text("Log in")),
-          TextButton(
-              onPressed: () {
-                Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const RegisterPage()));
               },
               child: const Text("Register")),
         ],

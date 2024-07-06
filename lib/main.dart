@@ -61,6 +61,11 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<void> logOut() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove("session_id");
+  }
+
   @override
   void initState() {
     super.initState();
@@ -70,37 +75,49 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: const Color(0xFF2F3C42),
-        appBar: AppBar(
-          title: Text(
-            widget.title,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
-          ),
-          actions: [
-            Container(
-              margin: const EdgeInsets.only(right: 10),
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15.0),
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => const ProfilePage()));
-                    },
-                    child: const Image(
-                      image: AssetImage("assets/img/placeholder_pfp.png"),
-                      height: 30,
-                      width: 30,
-                    ),
-                  )),
-            )
-          ],
-          backgroundColor: const Color(0xFF2F3C42),
-        ),
-        body: ChangeNotifierProvider<Session>(
-            create: (context) => Session(),
-            child: Column(
+    return ChangeNotifierProvider<Session>(
+        create: (context) => Session(),
+        child: Scaffold(
+            backgroundColor: const Color(0xFF2F3C42),
+            appBar: AppBar(
+              title: Text(
+                widget.title,
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
+              ),
+              actions: [
+                Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15.0),
+                      child: Consumer<Session>(
+                        builder: (context, session, child) {
+                          return InkWell(
+                            onTap: () async {
+                              final result = await Navigator.push(context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const ProfilePage()));
+
+                              if (!context.mounted) return;
+
+                              if (result != null && result) {
+                                session.logOut();
+                                logOut();
+                              }
+                            },
+                            child: const Image(
+                              image: AssetImage("assets/img/placeholder_pfp.png"),
+                              height: 30,
+                              width: 30,
+                            ),
+                          );
+                        },
+                      )),
+                )
+              ],
+              backgroundColor: const Color(0xFF2F3C42),
+            ),
+            body: Column(
               mainAxisSize: MainAxisSize.max,
               children: <Widget>[
                 Align(
@@ -124,7 +141,7 @@ class _HomePageState extends State<HomePage> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  const AddHouseholdPage()));
+                                              const AddHouseholdPage()));
 
                                       if (!context.mounted) return;
                                       if (!result) return;
@@ -212,11 +229,12 @@ class HouseholdsState extends State<Households> {
             return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: snapshot.data!
-                    .map((household) => HouseholdCard(
-                          title: household.name,
-                          color: household.color,
-                          id: household.id,
-                        ))
+                    .map((household) =>
+                    HouseholdCard(
+                      title: household.name,
+                      color: household.color,
+                      id: household.id,
+                    ))
                     .toList());
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');

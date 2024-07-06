@@ -12,6 +12,11 @@ class Session extends ChangeNotifier {
     notifyListeners();
   }
 
+  void logOut() {
+    _session.remove("session_id");
+    notifyListeners();
+  }
+
   void updateHouseholds() {
     notifyListeners();
   }
