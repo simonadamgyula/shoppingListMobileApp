@@ -241,6 +241,15 @@ class _ItemCardState extends State<ItemCard> {
         });
   }
 
+  String getImageUrl() {
+    final item = widget.item;
+    if (item.imagePath != null) {
+      return item.imagePath!;
+    }
+
+    return "https://web.getbring.com/assets/images/items/${item.id!.toLowerCase().replaceAll(RegExp(r"( |-)"), "_")}.png";
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -261,11 +270,16 @@ class _ItemCardState extends State<ItemCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Image.network(getImageUrl(), height: 50, width: 35, fit: BoxFit.contain),
               Text(
                 widget.item.name,
                 textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white),
               ),
-              Text(widget.item.quantity ?? "")
+              widget.item.quantity != null
+                  ? Text(widget.item.quantity!,
+                      style: const TextStyle(color: Colors.white))
+                  : const SizedBox()
             ],
           ),
         ),
@@ -285,6 +299,7 @@ class Catalog extends StatefulWidget {
 
 class _CatalogState extends State<Catalog> {
   List<Map<String, dynamic>> _catalog = getCatalog();
+  bool search = false;
 
   final TextEditingController searchController = TextEditingController();
 
@@ -295,9 +310,20 @@ class _CatalogState extends State<Catalog> {
     searchController.addListener(() {
       final query = searchController.text;
       setState(() {
+        search = query != "";
         _catalog = searchCatalog(query);
       });
     });
+  }
+
+  Item generateOther() {
+    final query = searchController.text;
+
+    return Item(
+        id: query.toLowerCase().replaceAll(RegExp(r"/( |-)/g"), "_"),
+        name: query,
+        imagePath:
+            "https://web.getbring.com/assets/images/items/${query.toLowerCase()[0]}.png");
   }
 
   @override
@@ -307,9 +333,10 @@ class _CatalogState extends State<Catalog> {
         borderRadius: BorderRadius.all(Radius.circular(20)),
         color: Color(0x33000000),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.only(left: 10, right: 10, bottom: search ? 10 : 0),
       margin: const EdgeInsets.only(top: 20),
       child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
                 TextField(
                   decoration: const InputDecoration(
@@ -323,7 +350,12 @@ class _CatalogState extends State<Catalog> {
                         section: section,
                         itemsStorage: widget.itemsStorage,
                       ))
-                  .toList()),
+                  .toList() +
+              [
+                search
+                    ? ItemCard(item: generateOther(), itemsStorage: widget.itemsStorage)
+                    : const SizedBox()
+              ]),
     );
   }
 }
@@ -359,10 +391,20 @@ class _SectionState extends State<Section> {
                     opened = !opened;
                   });
                 },
-                child: Text(
-                  widget.section["name"],
-                  style: const TextStyle(
-                      color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      widget.section["name"],
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                    ),
+                    Icon(
+                      opened ? Icons.arrow_right : Icons.arrow_drop_down,
+                      color: Colors.white,
+                      size: 30,
+                    )
+                  ],
                 )),
             opened
                 ? Wrap(

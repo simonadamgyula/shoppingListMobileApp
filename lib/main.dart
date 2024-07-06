@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:app/add_household.dart';
 import 'package:app/household.dart';
 import 'package:app/households.dart';
+import 'package:app/profile_page.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -77,6 +78,24 @@ class _HomePageState extends State<HomePage> {
             style: const TextStyle(
                 color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
           ),
+          actions: [
+            Container(
+              margin: const EdgeInsets.only(right: 10),
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15.0),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => const ProfilePage()));
+                    },
+                    child: const Image(
+                      image: AssetImage("assets/img/placeholder_pfp.png"),
+                      height: 30,
+                      width: 30,
+                    ),
+                  )),
+            )
+          ],
           backgroundColor: const Color(0xFF2F3C42),
         ),
         body: ChangeNotifierProvider<Session>(
@@ -105,7 +124,7 @@ class _HomePageState extends State<HomePage> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                              const AddHouseholdPage()));
+                                                  const AddHouseholdPage()));
 
                                       if (!context.mounted) return;
                                       if (!result) return;
@@ -193,8 +212,11 @@ class HouseholdsState extends State<Households> {
             return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: snapshot.data!
-                    .map((household) =>
-                    HouseholdCard(title: household.name, color: household.color, id: household.id,))
+                    .map((household) => HouseholdCard(
+                          title: household.name,
+                          color: household.color,
+                          id: household.id,
+                        ))
                     .toList());
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');
@@ -206,7 +228,8 @@ class HouseholdsState extends State<Households> {
 }
 
 class HouseholdCard extends StatelessWidget {
-  const HouseholdCard({super.key, required this.title, required this.color, required this.id});
+  const HouseholdCard(
+      {super.key, required this.title, required this.color, required this.id});
 
   final String title;
   final int color;
@@ -218,9 +241,8 @@ class HouseholdCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 5),
         child: InkWell(
           onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => HouseholdPage(id: id))
-            );
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => HouseholdPage(id: id)));
           },
           child: Card(
             color: HSLColor.fromAHSL(1, color.toDouble(), 0.83, 0.62).toColor(),

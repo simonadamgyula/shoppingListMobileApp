@@ -15,9 +15,9 @@ class Item {
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return switch (json) {
-      {"id": String id, "name": String name} => Item(id: id, name: name),
       {"id": String id, "name": String name, "src": String src} =>
         Item(id: id, name: name, imagePath: src),
+      {"id": String id, "name": String name} => Item(id: id, name: name),
       _ => throw const FormatException('Failed to load item.'),
     };
   }

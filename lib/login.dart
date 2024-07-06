@@ -15,14 +15,13 @@ class LoginPage extends StatelessWidget {
           title: const Text(
             "Login",
             style:
-            TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
           ),
           backgroundColor: const Color(0xFF2F3C42),
         ),
         body: const LoginForm());
   }
 }
-
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -40,13 +39,9 @@ class _LoginFormState extends State<LoginForm> {
   Future<String?> logIn() async {
     final response = await http.post(
         Uri.parse("http://192.168.1.93:8001/user/authenticate"),
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: jsonEncode({
-          "username": usernameController.text,
-          "password": passwordController.text
-        }));
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(
+            {"username": usernameController.text, "password": passwordController.text}));
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
@@ -84,12 +79,11 @@ class _LoginFormState extends State<LoginForm> {
           ),
           TextButton(
               onPressed: () {
-                logIn().then(
-                    (result) {
-                      if (result != null) {
-                        Navigator.pop(context, result);
-                      }
-                    });
+                logIn().then((result) {
+                  if (result != null) {
+                    Navigator.pop(context, result);
+                  }
+                });
               },
               child: const Text("Log in"))
         ],
