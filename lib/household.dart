@@ -53,85 +53,129 @@ class _HouseholdPageState extends State<HouseholdPage> {
                 ),
                 backgroundColor: const Color(0xFF2F3C42),
               ),
-              body: ChangeNotifierProvider<ItemsStorage>(
-                create: (BuildContext context) =>
-                    ItemsStorage(household.items ?? [], widget.id),
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            "To buy",
-                            style: TextStyle(
-                                color: Color(0x66ffffff),
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.left,
-                          ),
-                        ),
-                        Consumer(
-                          builder: (context, ItemsStorage itemsStorage, child) {
-                            return Wrap(
-                              alignment: WrapAlignment.spaceEvenly,
-                              runSpacing: 8,
-                              children: itemsStorage
-                                  .getItemsToBuy()
-                                  .map((item) => ItemCard(
-                                        item: item,
-                                        itemsStorage: itemsStorage,
-                                      ))
-                                  .toList(),
-                            );
-                          },
-                        ),
-                        Consumer<ItemsStorage>(
-                            builder: (context, ItemsStorage itemsStorage, child) {
-                          if (itemsStorage.getBoughtItems().isEmpty)
-                            return const SizedBox();
-
-                          return const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "Bought",
-                              style: TextStyle(
-                                  color: Color(0x66ffffff),
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.left,
-                            ),
-                          );
-                        }),
-                        Consumer(
-                          builder: (context, ItemsStorage itemsStorage, child) {
-                            return Wrap(
-                              alignment: WrapAlignment.spaceEvenly,
-                              runSpacing: 8,
-                              children: itemsStorage
-                                  .getBoughtItems()
-                                  .map((item) => ItemCard(
-                                        item: item,
-                                        itemsStorage: itemsStorage,
-                                      ))
-                                  .toList(),
-                            );
-                          },
-                        ),
-                        Consumer<ItemsStorage>(
-                            builder: (context, ItemsStorage itemsStorage, child) {
-                          return Catalog(
-                            itemsStorage: itemsStorage,
-                          );
-                        })
-                      ],
-                    ),
-                  ),
-                ),
-              ));
+              body: HouseholdBody(household: household, widget: widget));
         });
+  }
+}
+
+class HouseholdBody extends StatelessWidget {
+  const HouseholdBody({
+    super.key,
+    required this.household,
+    required this.widget,
+  });
+
+  final Household household;
+  final HouseholdPage widget;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<ItemsStorage>(
+      create: (BuildContext context) => ItemsStorage(household.items ?? [], widget.id),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "To buy",
+                  style: TextStyle(
+                      color: Color(0x66ffffff),
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              Consumer(
+                builder: (context, ItemsStorage itemsStorage, child) {
+                  if (itemsStorage.getItemsToBuy().isEmpty) {
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      child: const Align(
+                        child: Text(
+                          "Nothing to buy",
+                          style: TextStyle(
+                              color: Color(0xaaffffff),
+                              fontSize: 20,
+                              fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Wrap(
+                    alignment: WrapAlignment.start,
+                    runSpacing: 8,
+                    children: itemsStorage
+                        .getItemsToBuy()
+                        .map((item) => ItemCard(
+                              item: item,
+                              itemsStorage: itemsStorage,
+                            ))
+                        .toList(),
+                  );
+                },
+              ),
+              Consumer<ItemsStorage>(
+                  builder: (context, ItemsStorage itemsStorage, child) {
+                if (itemsStorage.getBoughtItems().isEmpty) {
+                  return const SizedBox();
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Bought",
+                        style: TextStyle(
+                            color: Color(0x66ffffff),
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.left,
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            itemsStorage.clearBought();
+                          },
+                          icon: const Icon(
+                            Icons.check_circle_outline,
+                            color: Color(0x88ffffff),
+                          ))
+                    ],
+                  ),
+                );
+              }),
+              Consumer(
+                builder: (context, ItemsStorage itemsStorage, child) {
+                  return Wrap(
+                    alignment: WrapAlignment.start,
+                    runSpacing: 8,
+                    children: itemsStorage
+                        .getBoughtItems()
+                        .map((item) => ItemCard(
+                              item: item,
+                              itemsStorage: itemsStorage,
+                            ))
+                        .toList(),
+                  );
+                },
+              ),
+              Consumer<ItemsStorage>(
+                  builder: (context, ItemsStorage itemsStorage, child) {
+                return Catalog(
+                  itemsStorage: itemsStorage,
+                );
+              })
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -164,9 +208,9 @@ class _ItemCardState extends State<ItemCard> {
             children: [
               TextField(
                 decoration: const InputDecoration(
-                    labelText: "Quantity", labelStyle: TextStyle(color: Colors.white)),
+                    labelText: "Quantity", labelStyle: TextStyle(color: Colors.black)),
                 controller: quantityController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -174,11 +218,13 @@ class _ItemCardState extends State<ItemCard> {
                   TextButton(
                       onPressed: () {
                         final itemToAdd = Item(
-                            id: widget.item.id,
                             name: widget.item.name,
                             bought: false,
-                            quantity: quantityController.text);
+                            quantity: quantityController.text,
+                            imagePath: widget.item.imagePath ??
+                                "https://web.getbring.com/assets/images/items/${widget.item.id!.toLowerCase().replaceAll(RegExp(r"/( |-)/g"), "_")}.png");
                         widget.itemsStorage.addItem(itemToAdd);
+                        quantityController.clear();
 
                         Navigator.of(context).pop();
                       },
@@ -209,7 +255,7 @@ class _ItemCardState extends State<ItemCard> {
       child: Card(
         color: Color((widget.item.bought ?? false) ? 0xffddb135 : 0xff00A894),
         child: SizedBox(
-          width: 90,
+          width: 80,
           height: 110,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -238,9 +284,21 @@ class Catalog extends StatefulWidget {
 }
 
 class _CatalogState extends State<Catalog> {
-  final List<Map<String, dynamic>> _catalog = getCatalog();
+  List<Map<String, dynamic>> _catalog = getCatalog();
 
   final TextEditingController searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    searchController.addListener(() {
+      final query = searchController.text;
+      setState(() {
+        _catalog = searchCatalog(query);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,8 +313,7 @@ class _CatalogState extends State<Catalog> {
           children: <Widget>[
                 TextField(
                   decoration: const InputDecoration(
-                    hintText: "Search", hintStyle: TextStyle(color: Colors.white)
-                  ),
+                      hintText: "Search", hintStyle: TextStyle(color: Colors.white)),
                   controller: searchController,
                   style: const TextStyle(color: Colors.white),
                 ),
@@ -309,8 +366,9 @@ class _SectionState extends State<Section> {
                 )),
             opened
                 ? Wrap(
-                    alignment: WrapAlignment.spaceEvenly,
-                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: items
                         .map((item) => ItemCard(
                               item: item,

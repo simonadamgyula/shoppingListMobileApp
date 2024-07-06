@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 class Item {
   Item({this.id, required this.name, this.quantity, this.imagePath, this.bought});
 
-  final dynamic id;
+  final String? id;
   final String name;
   final String? quantity;
   final String? imagePath;
@@ -21,6 +21,13 @@ class Item {
       _ => throw const FormatException('Failed to load item.'),
     };
   }
+
+  Map<String, dynamic> toJson() => {
+    "name": name,
+    "quantity": quantity,
+    "image": imagePath,
+    "bought": bought
+  };
 }
 
 class ItemsStorage extends ChangeNotifier {
@@ -44,10 +51,13 @@ class ItemsStorage extends ChangeNotifier {
     if (session.getSessionId() == null) return;
 
     http.post(Uri.parse("http://192.168.1.93:8001/household/items/add"),
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: jsonEncode({
           "session_id": session.getSessionId(),
           "household_id": householdId,
-          "item": item
+          "item": item.toJson()
         }));
 
     itemsToBuy.add(item);
@@ -60,6 +70,9 @@ class ItemsStorage extends ChangeNotifier {
     if (session.getSessionId() == null) return;
 
     http.post(Uri.parse("http://192.168.1.93:8001/household/items/set_bought"),
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: jsonEncode({
           "session_id": session.getSessionId(),
           "household_id": householdId,
@@ -95,6 +108,9 @@ class ItemsStorage extends ChangeNotifier {
     if (session.getSessionId() == null) return;
 
     http.post(Uri.parse("http://192.168.1.93:8001/household/items/remove"),
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: jsonEncode({
           "session_id": session.getSessionId(),
           "household_id": householdId,

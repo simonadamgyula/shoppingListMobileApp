@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 List<Map<String, dynamic>> getCatalog() {
   return [
     {
@@ -443,4 +445,21 @@ List<Map<String, dynamic>> getCatalog() {
       ]
     }
   ];
+}
+
+List<Map<String, dynamic>> searchCatalog(String query) {
+  final catalog = getCatalog();
+
+  final filteredSections = catalog
+      .where((section) => !section["items"]
+          .every((item) => !(item["name"] as String).toLowerCase().contains(query)))
+      .toList();
+
+  return filteredSections.map((section) {
+    final filteredItems = section["items"]
+        .where((item) => (item["name"] as String).toLowerCase().contains(query))
+        .toList();
+
+    return {"name": section["name"], "items": filteredItems};
+  }).toList();
 }
