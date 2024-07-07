@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:app/add_household.dart';
 import 'package:app/household.dart';
+import 'package:app/household_edit.dart';
 import 'package:app/households.dart';
 import 'package:app/profile_page.dart';
 import 'package:app/register.dart';
@@ -204,7 +205,7 @@ class _HomePageState extends State<HomePage> {
                                                   const AddHouseholdPage()));
 
                                       if (!context.mounted) return;
-                                      if (!result) return;
+                                      if (result == null) return;
 
                                       session.updateHouseholds();
                                     },
@@ -250,6 +251,9 @@ class HouseholdsState extends State<Households> {
   @override
   Widget build(BuildContext context) {
     final sessionId = widget.session.getSessionId();
+
+    log("rebuild");
+
     _futureHouseholds = getHouseholds(sessionId);
 
     return FutureBuilder(
@@ -293,18 +297,20 @@ class HouseholdCard extends StatefulWidget {
 }
 
 class _HouseholdCardState extends State<HouseholdCard> {
-  Future<void> leaveHousehold() async {
+  Future<bool> leaveHousehold() async {
     final result = await http.post(Uri.parse("http://192.168.1.93:8001/household/leave"),
         headers: {
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"session_id": widget.session.getSessionId(), "household_id": widget.id}));
+        body: jsonEncode(
+            {"session_id": widget.session.getSessionId(), "household_id": widget.id}));
 
     if (result.statusCode != 200) {
+      log("error");
       throw Error();
     }
 
-    widget.session.updateHouseholds();
+    return true;
   }
 
   void openActions(BuildContext context) {
@@ -316,9 +322,18 @@ class _HouseholdCardState extends State<HouseholdCard> {
           child: Center(
             child: Column(
               children: [
-                const TextButton(
-                  onPressed: null,
-                  child: Text(
+                TextButton(
+                  onPressed: () async {
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => HouseholdEditPage(id: widget.id)));
+
+                    if (!context.mounted) return;
+
+                    widget.session.updateHouseholds();
+                  },
+                  child: const Text(
                     "Edit",
                     style: TextStyle(
                       color: Colors.white,
@@ -342,6 +357,9 @@ class _HouseholdCardState extends State<HouseholdCard> {
                   onPressed: () {
                     leaveHousehold().then((response) {
                       Navigator.pop(context);
+                      setState(() {
+                        widget.session.updateHouseholds();
+                      });
                     });
                   },
                   child: const Text(
@@ -377,8 +395,10 @@ class _HouseholdCardState extends State<HouseholdCard> {
             color: HSLColor.fromAHSL(1, widget.color.toDouble(), 0.83, 0.62).toColor(),
             child: InkWell(
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => HouseholdPage(id: widget.id)));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => HouseholdPage(id: widget.id)));
               },
               child: SizedBox(
                 height: 180,

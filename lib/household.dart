@@ -28,8 +28,13 @@ class _HouseholdPageState extends State<HouseholdPage> {
         builder: (BuildContext context, AsyncSnapshot<Household?> snapshot) {
           if (!snapshot.hasData) {
             return Scaffold(
+              backgroundColor: const Color(0xFF2F3C42),
               appBar: AppBar(
-                title: const Text("Loading"),
+                title: const Text(
+                  "Loading",
+                  style: TextStyle(
+                      color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                ),
               ),
               body: const CircularProgressIndicator(),
             );
