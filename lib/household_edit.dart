@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:app/households.dart';
+import 'package:app/items.dart';
 import 'package:app/profile.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 class HouseholdEditPage extends StatefulWidget {
   const HouseholdEditPage({super.key, required this.id});
@@ -148,25 +151,107 @@ class _EditBodyState extends State<EditBody> {
             editHousehold();
           },
         ),
+        EditUsers(household: widget.household)
       ],
     );
   }
 }
 
 class EditUsers extends StatefulWidget {
-  const EditUsers({super.key});
+  const EditUsers({super.key, required this.household});
+
+  final Household household;
 
   @override
   State<EditUsers> createState() => _EditUsersState();
 }
 
 class _EditUsersState extends State<EditUsers> {
+  Future<List<Profile>>? _futureUsers;
+
+  @override
+  void initState() {
+    _futureUsers = widget.household.getUsers();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final _futureUsers = getUsers();
+    _futureUsers = widget.household.getUsers();
 
-    return FutureBuilder<List<Profile>>(future: null, builder: (BuildContext context, AsyncSnapshot<List<Profile>> snapshot) {
-      return const SizedBox();
+    return FutureBuilder<List<Profile>>(
+      future: _futureUsers,
+      builder: (BuildContext context, AsyncSnapshot<List<Profile>> snapshot) {
+        if (!snapshot.hasData) {
+          return const CircularProgressIndicator();
+        }
+
+        final users = snapshot.data!;
+        return ChangeNotifierProvider<MembersStorage>(
+            create: (BuildContext context) =>
+                MembersStorage(users: users, householdId: widget.household.id),
+            child: Consumer<MembersStorage>(
+                builder: (context, MembersStorage membersStorage, child) {
+              return Column(
+                children: membersStorage.users
+                    .map((user) =>
+                        UserSettings(user: user, membersStorage: membersStorage))
+                    .toList(),
+              );
+            }));
+      },
+    );
+  }
+}
+
+class UserSettings extends StatefulWidget {
+  const UserSettings({super.key, required this.user, required this.membersStorage});
+
+  final Profile user;
+  final MembersStorage membersStorage;
+
+  @override
+  State<UserSettings> createState() => _UserSettingsState();
+}
+
+class _UserSettingsState extends State<UserSettings> {
+  String _selectedPermission = "";
+
+  @override
+  void initState() {
+    setState(() {
+      _selectedPermission = widget.user.permission!;
     });
+    super.initState();
+  }
+
+  Future<void> kickUser() async {
+    widget.membersStorage.kickUser(widget.user);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        DropdownMenu<String>(
+          dropdownMenuEntries: ["member", "admin"]
+              .map<DropdownMenuEntry<String>>(
+                  (String value) => DropdownMenuEntry<String>(value: value, label: value))
+              .toList(),
+          initialSelection: widget.user.permission,
+          onSelected: (String? value) {
+            setState(() {
+              _selectedPermission = value!;
+            });
+            widget.membersStorage.editPermission(widget.user, _selectedPermission);
+          },
+        ),
+        TextButton(
+            onPressed: () {
+              kickUser();
+            },
+            child: const Text("Kick"))
+      ],
+    );
   }
 }

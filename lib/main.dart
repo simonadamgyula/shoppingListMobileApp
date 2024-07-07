@@ -252,8 +252,6 @@ class HouseholdsState extends State<Households> {
   Widget build(BuildContext context) {
     final sessionId = widget.session.getSessionId();
 
-    log("rebuild");
-
     _futureHouseholds = getHouseholds(sessionId);
 
     return FutureBuilder(

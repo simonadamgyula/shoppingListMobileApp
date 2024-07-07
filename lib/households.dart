@@ -23,25 +23,24 @@ class Household {
     };
   }
 
-  Future<List<Profile>> getUsers(int householdId) async {
+  Future<List<Profile>> getUsers() async {
     final response = await http.post(
       Uri.parse("http://192.168.1.93:8001/household/get_users"),
       body: jsonEncode({
         "session_id": Session().getSessionId(),
-        "household_id": householdId,
+        "household_id": id,
       }),
     );
 
     if (response.statusCode != 200) throw Error();
+    final users = jsonDecode(response.body)["users"] as List;
 
-    return
+    return users.map((user) => Profile.fromJson(user)).toList();
   }
 }
 
 Future<List<Household>> getHouseholds(String? sessionId) async {
   if (sessionId == null) return <Household>[];
-
-  log("getting household");
 
   final response = await http.post(Uri.parse("http://192.168.1.93:8001/household"),
       body: jsonEncode({"session_id": sessionId}));
