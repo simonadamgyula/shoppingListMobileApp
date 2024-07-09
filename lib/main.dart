@@ -11,6 +11,7 @@ import 'package:app/session.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -262,9 +263,7 @@ class HouseholdsState extends State<Households> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: snapshot.data!
                     .map((household) => HouseholdCard(
-                          title: household.name,
-                          color: household.color,
-                          id: household.id,
+                          household: household,
                           session: widget.session,
                         ))
                     .toList());
@@ -278,16 +277,9 @@ class HouseholdsState extends State<Households> {
 }
 
 class HouseholdCard extends StatefulWidget {
-  const HouseholdCard(
-      {super.key,
-      required this.title,
-      required this.color,
-      required this.id,
-      required this.session});
+  const HouseholdCard({super.key, required this.household, required this.session});
 
-  final String title;
-  final int color;
-  final int id;
+  final Household household;
   final Session session;
 
   @override
@@ -295,13 +287,17 @@ class HouseholdCard extends StatefulWidget {
 }
 
 class _HouseholdCardState extends State<HouseholdCard> {
+  Future<String?>? _futureJoinCode;
+
   Future<bool> leaveHousehold() async {
     final result = await http.post(Uri.parse("http://192.168.1.93:8001/household/leave"),
         headers: {
           "Content-Type": "application/json",
         },
-        body: jsonEncode(
-            {"session_id": widget.session.getSessionId(), "household_id": widget.id}));
+        body: jsonEncode({
+          "session_id": widget.session.getSessionId(),
+          "household_id": widget.household.id
+        }));
 
     if (result.statusCode != 200) {
       log("error");
@@ -309,6 +305,27 @@ class _HouseholdCardState extends State<HouseholdCard> {
     }
 
     return true;
+  }
+
+  Future<String?> createJoinCode() async {
+    final result = await http.post(
+      Uri.parse("http://192.168.1.93:8001/household/new_code"),
+      body: jsonEncode({
+        "session_id": widget.session.getSessionId(),
+        "household_id": widget.household.id
+      }),
+    );
+
+    if (result.statusCode != 200) return null;
+
+    final body = jsonDecode(result.body);
+
+    if (context.mounted) {
+      Navigator.pop(context);
+      openActions(context);
+    }
+
+    return body["code"] as String;
   }
 
   void openActions(BuildContext context) {
@@ -325,7 +342,8 @@ class _HouseholdCardState extends State<HouseholdCard> {
                     await Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => HouseholdEditPage(id: widget.id)));
+                            builder: (context) =>
+                                HouseholdEditPage(id: widget.household.id)));
 
                     if (!context.mounted) return;
 
@@ -340,16 +358,52 @@ class _HouseholdCardState extends State<HouseholdCard> {
                     ),
                   ),
                 ),
-                const TextButton(
-                  onPressed: null,
-                  child: Text(
-                    "Code",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                FutureBuilder<String?>(
+                  builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
+                    if (!snapshot.hasData) {
+                      return TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _futureJoinCode = createJoinCode();
+                          });
+                        },
+                        child: const Text(
+                          "Code",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final code = snapshot.data!;
+
+                    return TextButton(
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: code)).then((result) {
+                          Fluttertoast.showToast(
+                            msg: "Code copied to clipboard",
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: const Color(0x88000000),
+                            textColor: Colors.white,
+                            fontSize: 16
+                          );
+                        });
+                      },
+                      child: Text(
+                        code,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  },
+                  future: _futureJoinCode,
                 ),
                 TextButton(
                   onPressed: () {
@@ -390,20 +444,21 @@ class _HouseholdCardState extends State<HouseholdCard> {
         fit: StackFit.passthrough,
         children: [
           Card(
-            color: HSLColor.fromAHSL(1, widget.color.toDouble(), 0.83, 0.62).toColor(),
+            color: HSLColor.fromAHSL(1, widget.household.color.toDouble(), 0.83, 0.62)
+                .toColor(),
             child: InkWell(
               onTap: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => HouseholdPage(id: widget.id)));
+                        builder: (context) => HouseholdPage(id: widget.household.id)));
               },
               child: SizedBox(
                 height: 180,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                   child: Text(
-                    widget.title,
+                    widget.household.name,
                     style: const TextStyle(
                         color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
                   ),

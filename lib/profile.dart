@@ -100,7 +100,7 @@ class MembersStorage extends ChangeNotifier {
   void editPermission(Profile user, String permission) {
     user.permission = permission;
 
-    http.post(Uri.parse("http://192.168.1.93:8001/household/set_permissions"),
+    http.post(Uri.parse("http://192.168.1.93:8001/household/set_permission"),
         body: jsonEncode({
           "session_id": Session().getSessionId(),
           "household_id": householdId,

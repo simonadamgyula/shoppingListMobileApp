@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:app/households.dart';
-import 'package:app/items.dart';
 import 'package:app/profile.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
@@ -243,7 +242,7 @@ class _UserSettingsState extends State<UserSettings> {
             setState(() {
               _selectedPermission = value!;
             });
-            widget.membersStorage.editPermission(widget.user, _selectedPermission);
+            widget.membersStorage.editPermission(widget.user, value!);
           },
         ),
         TextButton(

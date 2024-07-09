@@ -39,6 +39,7 @@ dependencies:
   session_storage: ^0.0.1
   provider: ^6.1.2
   shared_preferences: ^2.2.3
+  fluttertoast: ^8.2.6
 
 dev_dependencies:
   flutter_test:
