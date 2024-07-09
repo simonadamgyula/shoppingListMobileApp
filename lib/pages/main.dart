@@ -18,29 +18,6 @@ import 'household.dart';
 import 'household_edit.dart';
 import 'login.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    return MaterialApp(
-      title: 'ShopMate',
-      theme: ThemeData(),
-      home: const HomePage(title: 'ShopMate'),
-    );
-  }
-}
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
 
