@@ -1,11 +1,10 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:app/households.dart';
+import 'package:app/http_request.dart';
 import 'package:app/profile.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 class HouseholdEditPage extends StatefulWidget {
@@ -19,9 +18,8 @@ class HouseholdEditPage extends StatefulWidget {
 
 class _HouseholdEditPageState extends State<HouseholdEditPage> {
   Future<Household?> getHouseholdIfAdmin(String? sessionId, int householdId) async {
-    var response = await http.post(
-        Uri.parse("http://192.168.1.93:8001/household/check_admin"),
-        body: jsonEncode({"session_id": sessionId, "household_id": householdId}));
+    final response = await sendApiRequest(
+        "/household/check_admin", {"session_id": sessionId, "household_id": householdId});
 
     if (response.statusCode != 200) throw Error();
     if (!jsonDecode(response.body)["is_admin"]) throw Error();
@@ -94,15 +92,12 @@ class _EditBodyState extends State<EditBody> {
   final TextEditingController _nameController = TextEditingController();
 
   Future<void> editHousehold() async {
-    http.post(
-      Uri.parse("http://192.168.1.93:8001/household/update"),
-      body: jsonEncode({
-        "session_id": Session().getSessionId(),
-        "household_id": widget.household.id,
-        "new_name": _nameController.text,
-        "new_color": _colorValue
-      }),
-    );
+    sendApiRequest("/household/update", {
+      "session_id": Session().getSessionId(),
+      "household_id": widget.household.id,
+      "new_name": _nameController.text,
+      "new_color": _colorValue
+    });
   }
 
   @override
@@ -232,6 +227,10 @@ class _UserSettingsState extends State<UserSettings> {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        Text(
+          widget.user.username,
+          style: const TextStyle(color: Colors.white),
+        ),
         DropdownMenu<String>(
           dropdownMenuEntries: ["member", "admin"]
               .map<DropdownMenuEntry<String>>(
@@ -242,14 +241,14 @@ class _UserSettingsState extends State<UserSettings> {
             setState(() {
               _selectedPermission = value!;
             });
-            widget.membersStorage.editPermission(widget.user, value!);
+            widget.membersStorage.editPermission(widget.user, _selectedPermission);
           },
         ),
         TextButton(
             onPressed: () {
               kickUser();
             },
-            child: const Text("Kick"))
+            child: const Text("Kick", style: TextStyle(color: Colors.red),))
       ],
     );
   }

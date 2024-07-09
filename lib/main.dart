@@ -15,8 +15,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'http_request.dart';
 import 'login.dart';
-import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -290,14 +290,13 @@ class _HouseholdCardState extends State<HouseholdCard> {
   Future<String?>? _futureJoinCode;
 
   Future<bool> leaveHousehold() async {
-    final result = await http.post(Uri.parse("http://192.168.1.93:8001/household/leave"),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "session_id": widget.session.getSessionId(),
-          "household_id": widget.household.id
-        }));
+    final result = await sendApiRequest(
+      "/household/leave",
+      {"session_id": widget.session.getSessionId(), "household_id": widget.household.id},
+      headers: {
+        "Content-Type": "application/json",
+      },
+    );
 
     if (result.statusCode != 200) {
       log("error");
@@ -308,12 +307,9 @@ class _HouseholdCardState extends State<HouseholdCard> {
   }
 
   Future<String?> createJoinCode() async {
-    final result = await http.post(
-      Uri.parse("http://192.168.1.93:8001/household/new_code"),
-      body: jsonEncode({
-        "session_id": widget.session.getSessionId(),
-        "household_id": widget.household.id
-      }),
+    final result = await sendApiRequest(
+      "/household/new_code",
+      {"session_id": widget.session.getSessionId(), "household_id": widget.household.id},
     );
 
     if (result.statusCode != 200) return null;
@@ -384,13 +380,12 @@ class _HouseholdCardState extends State<HouseholdCard> {
                       onPressed: () async {
                         await Clipboard.setData(ClipboardData(text: code)).then((result) {
                           Fluttertoast.showToast(
-                            msg: "Code copied to clipboard",
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.CENTER,
-                            backgroundColor: const Color(0x88000000),
-                            textColor: Colors.white,
-                            fontSize: 16
-                          );
+                              msg: "Code copied to clipboard",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.CENTER,
+                              backgroundColor: const Color(0x88000000),
+                              textColor: Colors.white,
+                              fontSize: 16);
                         });
                       },
                       child: Text(

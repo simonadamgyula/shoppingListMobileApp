@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:app/http_request.dart';
 import 'package:app/session.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
@@ -22,12 +23,8 @@ class Item {
     };
   }
 
-  Map<String, dynamic> toJson() => {
-    "name": name,
-    "quantity": quantity,
-    "image": imagePath,
-    "bought": bought
-  };
+  Map<String, dynamic> toJson() =>
+      {"name": name, "quantity": quantity, "image": imagePath, "bought": bought};
 }
 
 class ItemsStorage extends ChangeNotifier {
@@ -50,15 +47,17 @@ class ItemsStorage extends ChangeNotifier {
     final session = Session();
     if (session.getSessionId() == null) return;
 
-    http.post(Uri.parse("http://192.168.1.93:8001/household/items/add"),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "session_id": session.getSessionId(),
-          "household_id": householdId,
-          "item": item.toJson()
-        }));
+    sendApiRequest(
+      "/household/items/add",
+      {
+        "session_id": session.getSessionId(),
+        "household_id": householdId,
+        "item": item.toJson()
+      },
+      headers: {
+        "Content-Type": "application/json",
+      },
+    );
 
     itemsToBuy.add(item);
 
@@ -69,16 +68,16 @@ class ItemsStorage extends ChangeNotifier {
     final session = Session();
     if (session.getSessionId() == null) return;
 
-    http.post(Uri.parse("http://192.168.1.93:8001/household/items/set_bought"),
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: jsonEncode({
-          "session_id": session.getSessionId(),
-          "household_id": householdId,
-          "item": item.name,
-          "bought": bought
-        }));
+    sendApiRequest(
+      "/household/items/set_bought",
+      {
+        "session_id": session.getSessionId(),
+        "household_id": householdId,
+        "item": item.name,
+        "bought": bought
+      },
+      headers: {"Content-Type": "application/json"},
+    );
 
     if (bought) {
       itemsToBuy.remove(item);
@@ -107,15 +106,15 @@ class ItemsStorage extends ChangeNotifier {
     final session = Session();
     if (session.getSessionId() == null) return;
 
-    http.post(Uri.parse("http://192.168.1.93:8001/household/items/remove"),
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: jsonEncode({
-          "session_id": session.getSessionId(),
-          "household_id": householdId,
-          "item": item.name
-        }));
+    sendApiRequest(
+      "/household/items/remove",
+      {
+        "session_id": session.getSessionId(),
+        "household_id": householdId,
+        "item": item.name
+      },
+      headers: {"Content-Type": "application/json"},
+    );
   }
 
   List<Item> getItemsToBuy() {

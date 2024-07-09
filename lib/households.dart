@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:app/http_request.dart';
 import 'package:app/profile.dart';
 import 'package:app/session.dart';
 import 'package:http/http.dart' as http;
@@ -42,8 +43,7 @@ class Household {
 Future<List<Household>> getHouseholds(String? sessionId) async {
   if (sessionId == null) return <Household>[];
 
-  final response = await http.post(Uri.parse("http://192.168.1.93:8001/household"),
-      body: jsonEncode({"session_id": sessionId}));
+  final response = await sendApiRequest("/household", {"session_id": sessionId});
 
   if (response.statusCode != 200) {
     return <Household>[];
@@ -60,8 +60,8 @@ Future<List<Household>> getHouseholds(String? sessionId) async {
 Future<Household?> getHousehold(String? sessionId, int householdId) async {
   if (sessionId == null) throw StateError("Not logged in");
 
-  final response = await http.post(Uri.parse("http://192.168.1.93:8001/household/get"),
-      body: jsonEncode({"session_id": sessionId, "household_id": householdId}));
+  final response = await sendApiRequest(
+      "/household/get", {"session_id": sessionId, "household_id": householdId});
 
   if (response.statusCode == 401) {
     throw StateError("Not a member of this household");
@@ -80,8 +80,8 @@ Future<Household?> getHousehold(String? sessionId, int householdId) async {
 Future<List<Item>?> getHouseholdItems(String? sessionId, int householdId) async {
   if (sessionId == null) throw StateError("Not logged in");
 
-  final response = await http.post(Uri.parse("http://192.168.1.93:8001/household/items"),
-      body: jsonEncode({"session_id": sessionId, "household": householdId}));
+  final response = await sendApiRequest(
+      "/household/items", {"session_id": sessionId, "household": householdId});
 
   if (response.statusCode == 401) {
     throw StateError("Not a member of this household");
@@ -105,8 +105,8 @@ Future<List<Item>?> getHouseholdItems(String? sessionId, int householdId) async 
 Future<bool> joinHousehold(String? sessionId, String code) async {
   if (sessionId == null) throw StateError("Not logged in");
 
-  final response = await http.post(Uri.parse("http://192.168.1.93:8001/household/join"),
-      body: jsonEncode({"session_id": sessionId, "household_code": code}));
+  final response = await sendApiRequest(
+      "/household/join", {"session_id": sessionId, "household_code": code});
 
   if (response.statusCode != 200) {
     return false;
@@ -118,8 +118,8 @@ Future<bool> joinHousehold(String? sessionId, String code) async {
 Future<bool> createHousehold(String? sessionId, String name, int color) async {
   if (sessionId == null) throw StateError("Not logged in");
 
-  final response = await http.post(Uri.parse("http://192.168.1.93:8001/household/new"),
-      body: jsonEncode({"session_id": sessionId, "name": name, "color": color}));
+  final response = await sendApiRequest(
+      "/household/new", {"session_id": sessionId, "name": name, "color": color});
 
   if (response.statusCode != 200) {
     return false;

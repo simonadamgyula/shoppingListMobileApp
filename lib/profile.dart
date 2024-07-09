@@ -5,6 +5,8 @@ import 'package:app/session.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 
+import 'http_request.dart';
+
 class Profile {
   final String id;
   final String username;
@@ -48,11 +50,13 @@ class Profile {
   Future<void> deleteAccount() async {
     final session = Session();
 
-    final result = await http.post(Uri.parse("http://192.168.1.93:8001/user/delete"),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({"session_id": session.getSessionId()}));
+    final result = await sendApiRequest(
+      "/user/delete",
+      {"session_id": session.getSessionId()},
+      headers: {
+        "Content-Type": "application/json",
+      },
+    );
 
     if (result.statusCode != 200) {
       throw Error();
@@ -62,15 +66,14 @@ class Profile {
   Future<void> editProfile(String username) async {
     final session = Session();
 
-    final result = await http.post(Uri.parse("http://192.168.1.93:8001/user/edit"),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "session_id": session.getSessionId(),
-          "username": username,
-          "profile_picture": profilePicture
-        }));
+    final result = await sendApiRequest(
+      "/user/edit",
+      {
+        "session_id": session.getSessionId(),
+        "username": username,
+        "profile_picture": profilePicture
+      },
+    );
 
     if (result.statusCode != 200) {
       throw Error();
@@ -87,12 +90,14 @@ class MembersStorage extends ChangeNotifier {
   void kickUser(Profile user) {
     log((householdId).toString());
 
-    http.post(Uri.parse("http://192.168.1.93:8001/household/kick_member"),
-        body: jsonEncode({
-          "session_id": Session().getSessionId(),
-          "household_id": householdId,
-          "user_id": user.id,
-        }));
+    sendApiRequest(
+      "/household/kick_member",
+      {
+        "session_id": Session().getSessionId(),
+        "household_id": householdId,
+        "user_id": user.id,
+      },
+    );
 
     notifyListeners();
   }
@@ -100,13 +105,15 @@ class MembersStorage extends ChangeNotifier {
   void editPermission(Profile user, String permission) {
     user.permission = permission;
 
-    http.post(Uri.parse("http://192.168.1.93:8001/household/set_permission"),
-        body: jsonEncode({
-          "session_id": Session().getSessionId(),
-          "household_id": householdId,
-          "user_id": user.id,
-          "permission": permission
-        }));
+    sendApiRequest(
+      "/household/set_permission",
+      {
+        "session_id": Session().getSessionId(),
+        "household_id": householdId,
+        "user_id": user.id,
+        "permission": permission
+      },
+    );
 
     notifyListeners();
   }

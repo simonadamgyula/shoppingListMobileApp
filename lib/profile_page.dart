@@ -1,10 +1,9 @@
 import 'dart:convert';
 
+import 'package:app/http_request.dart';
 import 'package:app/profile.dart';
 import 'package:app/session.dart';
 import 'package:flutter/material.dart';
-
-import 'package:http/http.dart' as http;
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -23,8 +22,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<Profile> getProfile(String sessionId) async {
-    final response = await http.post(Uri.parse("http://192.168.1.93:8001/user/get_user"),
-        body: jsonEncode({"session_id": sessionId}));
+    final response = await sendApiRequest(
+      "/user/get_user",
+      {"session_id": sessionId},
+    );
 
     if (response.statusCode != 200) {
       throw Error();
@@ -84,18 +85,28 @@ class _ProfilePageState extends State<ProfilePage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text("Log out of your account"),
-                          TextButton(onPressed: () {
-                            Navigator.of(context).pop(true);
-                          }, child: const Text("Log out", style: TextStyle(color: Color(0xffaa0000)),))
+                          TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(true);
+                              },
+                              child: const Text(
+                                "Log out",
+                                style: TextStyle(color: Color(0xffaa0000)),
+                              ))
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text("Delete your account. \nThis is not reversible."),
-                          TextButton(onPressed: () {
-                            profile.deleteAccount();
-                          }, child: const Text("Delete", style: TextStyle(color: Color(0xffaa0000)),))
+                          TextButton(
+                              onPressed: () {
+                                profile.deleteAccount();
+                              },
+                              child: const Text(
+                                "Delete",
+                                style: TextStyle(color: Color(0xffaa0000)),
+                              ))
                         ],
                       )
                     ],

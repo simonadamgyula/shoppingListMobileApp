@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:app/http_request.dart';
 import 'package:app/register.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -39,11 +39,11 @@ class _LoginFormState extends State<LoginForm> {
   final TextEditingController passwordController = TextEditingController();
 
   Future<String?> logIn() async {
-    final response = await http.post(
-        Uri.parse("http://192.168.1.93:8001/user/authenticate"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(
-            {"username": usernameController.text, "password": passwordController.text}));
+    final response = await sendApiRequest(
+      "/user/authenticate",
+      {"username": usernameController.text, "password": passwordController.text},
+      headers: {"Content-Type": "application/json"},
+    );
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
