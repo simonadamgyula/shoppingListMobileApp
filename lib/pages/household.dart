@@ -1,10 +1,10 @@
-import 'package:app/catalog.dart';
-import 'package:app/session.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'households.dart';
-import 'items.dart';
+import '../catalog.dart';
+import '../households.dart';
+import '../items.dart';
+import '../session.dart';
 
 class HouseholdPage extends StatefulWidget {
   final int id;
@@ -30,13 +30,15 @@ class _HouseholdPageState extends State<HouseholdPage> {
             return Scaffold(
               backgroundColor: const Color(0xFF2F3C42),
               appBar: AppBar(
+                iconTheme: const IconThemeData(color: Colors.white),
                 title: const Text(
                   "Loading",
                   style: TextStyle(
                       color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
                 ),
+                backgroundColor: const Color(0xFF2F3C42),
               ),
-              body: const CircularProgressIndicator(),
+              body: const Center(child: CircularProgressIndicator(color: Colors.white)),
             );
           }
 
@@ -210,12 +212,15 @@ class _ItemCardState extends State<ItemCard> {
         builder: (BuildContext context) {
           return SimpleDialog(
             title: Text("Add ${widget.item.name} to list"),
+            titleTextStyle: const TextStyle(color: Colors.white),
+            backgroundColor: const Color(0xFF2F3C42),
+            contentPadding: const EdgeInsets.all(20),
             children: [
               TextField(
                 decoration: const InputDecoration(
-                    labelText: "Quantity", labelStyle: TextStyle(color: Colors.black)),
+                    labelText: "Quantity", labelStyle: TextStyle(color: Colors.white)),
                 controller: quantityController,
-                style: const TextStyle(color: Colors.black),
+                style: const TextStyle(color: Colors.white),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,

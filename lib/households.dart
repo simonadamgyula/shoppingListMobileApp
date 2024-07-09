@@ -1,11 +1,10 @@
 import 'dart:convert';
-import 'dart:developer';
 
-import 'package:app/http_request.dart';
-import 'package:app/profile.dart';
-import 'package:app/session.dart';
+import 'package:ShopMate/profile.dart';
+import 'package:ShopMate/session.dart';
 import 'package:http/http.dart' as http;
 
+import 'http_request.dart';
 import 'items.dart';
 
 class Household {

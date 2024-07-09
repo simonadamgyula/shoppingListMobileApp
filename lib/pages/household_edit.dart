@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import 'package:app/households.dart';
-import 'package:app/http_request.dart';
-import 'package:app/profile.dart';
-import 'package:app/session.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../households.dart';
+import '../http_request.dart';
+import '../profile.dart';
+import '../session.dart';
 
 class HouseholdEditPage extends StatefulWidget {
   const HouseholdEditPage({super.key, required this.id});
@@ -19,7 +20,9 @@ class HouseholdEditPage extends StatefulWidget {
 class _HouseholdEditPageState extends State<HouseholdEditPage> {
   Future<Household?> getHouseholdIfAdmin(String? sessionId, int householdId) async {
     final response = await sendApiRequest(
-        "/household/check_admin", {"session_id": sessionId, "household_id": householdId});
+      "/household/check_admin",
+      {"session_id": sessionId, "household_id": householdId},
+    );
 
     if (response.statusCode != 200) throw Error();
     if (!jsonDecode(response.body)["is_admin"]) throw Error();
@@ -49,7 +52,7 @@ class _HouseholdEditPageState extends State<HouseholdEditPage> {
               backgroundColor: const Color(0xFF2F3C42),
               foregroundColor: Colors.white,
             ),
-            body: const CircularProgressIndicator(),
+            body: const Center(child: CircularProgressIndicator(color: Colors.white)),
           );
         }
 
@@ -115,38 +118,49 @@ class _EditBodyState extends State<EditBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        TextField(
-          controller: _nameController,
-          decoration: const InputDecoration(
-              hintText: "Household name", hintStyle: TextStyle(color: Colors.white)),
-          style: const TextStyle(color: Colors.white),
-          onEditingComplete: () {
-            editHousehold();
-          },
-        ),
-        Slider(
-          value: _colorValue,
-          min: 0,
-          max: 360,
-          onChanged: (double value) {
-            setState(() {
-              _colorValue = value;
-            });
-          },
-          onChangeEnd: (double value) {
-            setState(() {
-              _colorValue = value;
-            });
+    return Padding(
+      padding: const EdgeInsets.all(30),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+                hintText: "Household name", hintStyle: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: Colors.white),
+            onEditingComplete: () {
+              if (_nameController.text == "") {
+                setState(() {
+                  _nameController.text = widget.household.name;
+                });
+              }
+              editHousehold();
+            },
+          ),
+          Slider(
+            value: _colorValue,
+            min: 0,
+            max: 360,
+            onChanged: (double value) {
+              setState(() {
+                _colorValue = value;
+              });
+            },
+            onChangeEnd: (double value) {
+              setState(() {
+                _colorValue = value;
+              });
 
-            editHousehold();
-          },
-        ),
-        EditUsers(household: widget.household)
-      ],
+              editHousehold();
+            },
+            thumbColor: HSLColor.fromAHSL(1, _colorValue, 0.83, 0.62).toColor(),
+            activeColor: Colors.white70,
+            inactiveColor: Colors.white70,
+          ),
+          EditUsers(household: widget.household)
+        ],
+      ),
     );
   }
 }
@@ -177,7 +191,7 @@ class _EditUsersState extends State<EditUsers> {
       future: _futureUsers,
       builder: (BuildContext context, AsyncSnapshot<List<Profile>> snapshot) {
         if (!snapshot.hasData) {
-          return const CircularProgressIndicator();
+          return const CircularProgressIndicator(color: Colors.white);
         }
 
         final users = snapshot.data!;
@@ -187,6 +201,7 @@ class _EditUsersState extends State<EditUsers> {
             child: Consumer<MembersStorage>(
                 builder: (context, MembersStorage membersStorage, child) {
               return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: membersStorage.users
                     .map((user) =>
                         UserSettings(user: user, membersStorage: membersStorage))
@@ -226,10 +241,15 @@ class _UserSettingsState extends State<UserSettings> {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Text(
-          widget.user.username,
-          style: const TextStyle(color: Colors.white),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Text(
+              widget.user.username,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
         ),
         DropdownMenu<String>(
           dropdownMenuEntries: ["member", "admin"]
@@ -243,12 +263,16 @@ class _UserSettingsState extends State<UserSettings> {
             });
             widget.membersStorage.editPermission(widget.user, _selectedPermission);
           },
+          textStyle: const TextStyle(color: Colors.white),
         ),
         TextButton(
             onPressed: () {
               kickUser();
             },
-            child: const Text("Kick", style: TextStyle(color: Colors.red),))
+            child: const Text(
+              "Kick",
+              style: TextStyle(color: Colors.red),
+            ))
       ],
     );
   }

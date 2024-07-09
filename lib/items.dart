@@ -1,9 +1,7 @@
-import 'dart:convert';
-
-import 'package:app/http_request.dart';
-import 'package:app/session.dart';
+import 'package:ShopMate/session.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
+
+import 'http_request.dart';
 
 class Item {
   Item({this.id, required this.name, this.quantity, this.imagePath, this.bought});

@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:app/login.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import 'http_request.dart';
+import '../http_request.dart';
+import 'login.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -35,11 +35,37 @@ class RegisterForm extends StatefulWidget {
 }
 
 class _RegisterFormState extends State<RegisterForm> {
+  late FocusNode passwordNode;
+  late FocusNode rePasswordNode;
+
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController rePasswordController = TextEditingController();
 
+  String? error;
+
+  @override
+  void initState() {
+    passwordNode = FocusNode();
+    rePasswordNode = FocusNode();
+
+    super.initState();
+  }
+
   Future<String?> register() async {
+    if (passwordController.text != rePasswordController.text) {
+      setState(() {
+        error = "Passwords do not match";
+      });
+      return null;
+    }
+    if (passwordController.text.isEmpty || usernameController.text.isEmpty) {
+      setState(() {
+        error = "Username and password must not be empty";
+      });
+      return null;
+    }
+
     var response = await sendApiRequest(
       "/user/new",
       {
@@ -75,21 +101,43 @@ class _RegisterFormState extends State<RegisterForm> {
             controller: usernameController,
             decoration: const InputDecoration(
                 labelText: "Username", labelStyle: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: Colors.white),
+            onFieldSubmitted: (String _) {
+              passwordNode.requestFocus();
+            },
+            maxLength: 20,
           ),
           TextFormField(
             controller: passwordController,
             decoration: const InputDecoration(
                 labelText: "Password", labelStyle: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: Colors.white),
+            onFieldSubmitted: (String _) {
+              rePasswordNode.requestFocus();
+            },
           ),
           TextFormField(
             controller: rePasswordController,
             decoration: const InputDecoration(
                 labelText: "Repeat password", labelStyle: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: Colors.white),
+            onFieldSubmitted: (_) {
+              register().then((result) {
+                if (result != null) {
+                  Navigator.pop(context, result);
+                }
+              });
+            },
           ),
+          (error != null)
+              ? Text(
+                  error!,
+                  style: const TextStyle(color: Colors.red),
+                )
+              : const SizedBox(),
           TextButton(
             onPressed: () {
               register().then((result) {
-                log(result ?? "null");
                 if (result != null) {
                   Navigator.pop(context, result);
                 }

@@ -1,9 +1,10 @@
 import 'dart:convert';
 
-import 'package:app/http_request.dart';
-import 'package:app/register.dart';
+import 'package:ShopMate/pages/register.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+
+import '../http_request.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -38,19 +39,37 @@ class _LoginFormState extends State<LoginForm> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  Future<String?> logIn() async {
+  String? error;
+
+  late FocusNode _passwordFocusNode;
+
+  Future<void> logIn() async {
     final response = await sendApiRequest(
       "/user/authenticate",
       {"username": usernameController.text, "password": passwordController.text},
       headers: {"Content-Type": "application/json"},
     );
 
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-      return body["session_id"];
+    if (response.statusCode != 200) {
+      setState(() {
+        error = "Invalid username or password";
+      });
+      return;
     }
 
-    return null;
+    final body = jsonDecode(response.body);
+    final sessionId = body["session_id"];
+
+    if (mounted) {
+      Navigator.pop(context, sessionId);
+    }
+  }
+
+  @override
+  void initState() {
+    _passwordFocusNode = FocusNode();
+
+    super.initState();
   }
 
   @override
@@ -72,20 +91,30 @@ class _LoginFormState extends State<LoginForm> {
                 labelText: "Username", labelStyle: TextStyle(color: Colors.white)),
             style: const TextStyle(color: Colors.white),
             controller: usernameController,
+            autofocus: true,
+            onFieldSubmitted: (String value) {
+              _passwordFocusNode.requestFocus();
+            },
           ),
           TextFormField(
             decoration: const InputDecoration(
                 labelText: "Password", labelStyle: TextStyle(color: Colors.white)),
             style: const TextStyle(color: Colors.white),
             controller: passwordController,
+            focusNode: _passwordFocusNode,
+            onFieldSubmitted: (String value) {
+              logIn();
+            },
           ),
+          (error != null)
+              ? Text(
+            error!,
+            style: const TextStyle(color: Colors.red),
+          )
+              : const SizedBox(),
           TextButton(
               onPressed: () {
-                logIn().then((result) {
-                  if (result != null) {
-                    Navigator.pop(context, result);
-                  }
-                });
+                logIn();
               },
               child: const Text("Log in")),
           RichText(

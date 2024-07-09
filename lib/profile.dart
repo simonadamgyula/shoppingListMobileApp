@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'dart:developer';
 
-import 'package:app/session.dart';
+import 'package:ShopMate/session.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
 
 import 'http_request.dart';
 

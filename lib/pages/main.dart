@@ -1,13 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:app/add_household.dart';
-import 'package:app/household.dart';
-import 'package:app/household_edit.dart';
-import 'package:app/households.dart';
-import 'package:app/profile_page.dart';
-import 'package:app/register.dart';
-import 'package:app/session.dart';
+import 'package:ShopMate/pages/profile_page.dart';
+import 'package:ShopMate/pages/register.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,7 +10,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'http_request.dart';
+import 'add_household.dart';
+import '../households.dart';
+import '../http_request.dart';
+import '../session.dart';
+import 'household.dart';
+import 'household_edit.dart';
 import 'login.dart';
 
 void main() {
@@ -438,24 +438,35 @@ class _HouseholdCardState extends State<HouseholdCard> {
         alignment: Alignment.bottomRight,
         fit: StackFit.passthrough,
         children: [
-          Card(
-            color: HSLColor.fromAHSL(1, widget.household.color.toDouble(), 0.83, 0.62)
-                .toColor(),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => HouseholdPage(id: widget.household.id)));
-              },
-              child: SizedBox(
-                height: 180,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                  child: Text(
-                    widget.household.name,
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+          Container(
+            decoration: const BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 30.0,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Card(
+              color: HSLColor.fromAHSL(1, widget.household.color.toDouble(), 0.83, 0.62)
+                  .toColor(),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => HouseholdPage(id: widget.household.id)));
+                },
+                child: SizedBox(
+                  height: 180,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                    child: Text(
+                      widget.household.name,
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
