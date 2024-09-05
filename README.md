@@ -1,16 +1,10 @@
 # app
 
-A new Flutter project.
+A flutter (mobile) app that helps you keep track of shopping list.
 
-## Getting Started
+## Install
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. You need to run the api yourself, because I couldn't deploy the api anywhere yet. So download the [Api](https://github.com/simonadamgyula/shoppingListApi).
+2. In the file ``` lib/http_request.dart ``` change ``` apiUrl ``` to your api url.
+3. Build the app using ``` flutter build apk ``` and install the apk on your android phone.
+4. Great job, you can now user the app.
